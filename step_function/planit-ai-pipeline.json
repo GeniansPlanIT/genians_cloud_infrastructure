@@ -1,0 +1,190 @@
+{
+  "Comment": "EDR AI 분석 및 EC2 그룹핑 파이프라인 (시간대 파라미터 전달)",
+  "StartAt": "RunEdrToElasticsearch",
+  "States": {
+    "RunEdrToElasticsearch": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:ap-northeast-2:640983358257:function:edr-to-elasticsearch"
+      },
+      "ResultPath": "$.Task1Result",
+      "Next": "RunAnalysisProducer",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.All"
+          ],
+          "Next": "SendSlackAlert",
+          "ResultPath": "$.error"
+        }
+      ]
+    },
+    "RunAnalysisProducer": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:ap-northeast-2:640983358257:function:planit-edr-analysis-producer",
+        "Payload": {
+          "target_index_suffix.$": "$.Task1Result.Payload.target_index_suffix"
+        }
+      },
+      "ResultPath": "$.Task2Result",
+      "Next": "CheckProducerResult",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.All"
+          ],
+          "Next": "SendSlackAlert",
+          "ResultPath": "$.error"
+        }
+      ]
+    },
+    "CheckProducerResult": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.Task2Result.Payload.statusCode",
+          "IsPresent": false,
+          "Next": "RunAnalysisConsumerMap"
+        }
+      ],
+      "Default": "NoDataSucceed"
+    },
+    "RunAnalysisConsumerMap": {
+      "Type": "Map",
+      "ItemsPath": "$.Task2Result.Payload",
+      "MaxConcurrency": 40,
+      "ResultPath": "$.Task3Result",
+      "Next": "RunGroupingLambda",
+      "Iterator": {
+        "StartAt": "RunAnalysisConsumer",
+        "States": {
+          "RunAnalysisConsumer": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+              "FunctionName": "arn:aws:lambda:ap-northeast-2:640983358257:function:planit-edr-analysis-consumer",
+              "Payload.$": "$"
+            },
+            "End": true,
+            "Retry": [
+              {
+                "ErrorEquals": [
+                  "Lambda.TooManyRequestsException"
+                ],
+                "IntervalSeconds": 5,
+                "MaxAttempts": 3,
+                "BackoffRate": 2
+              }
+            ],
+            "Catch": [
+              {
+                "ErrorEquals": [
+                  "States.All"
+                ],
+                "Comment": "재시도 실패 시 이 반복을 실패 처리",
+                "ResultPath": "$.error",
+                "Next": "IterationFailed"
+              }
+            ]
+          },
+          "IterationFailed": {
+            "Type": "Fail",
+            "Comment": "이 Map 반복(Iteration)이 실패했습니다."
+          }
+        }
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.All"
+          ],
+          "Next": "SendSlackAlert",
+          "ResultPath": "$.error"
+        }
+      ]
+    },
+    "RunGroupingLambda": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:ap-northeast-2:640983358257:function:ticket-generator",
+        "Payload": {
+          "batch_id.$": "$.Task1Result.Payload.batch_id",
+          "target_index_suffix.$": "$.Task1Result.Payload.target_index_suffix"
+        }
+      },
+      "ResultPath": "$.GroupingResult",
+      "End": true,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.TooManyRequestsException",
+            "Lambda.Unknown"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.All"
+          ],
+          "Next": "SendSlackAlert",
+          "ResultPath": "$.error"
+        }
+      ]
+    },
+    "NoDataSucceed": {
+      "Type": "Succeed",
+      "Comment": "Producer가 반환한 결과가 배열이 아니므로(데이터 없음) 정상 종료합니다."
+    },
+    "SendSlackAlert": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:ap-northeast-2:640983358257:function:YOUR_SLACK_LAMBDA_NAME_HERE",
+        "Payload": {
+          "Error.$": "$.error.Error",
+          "Cause.$": "$.error.Cause",
+          "ExecutionId.$": "$$.Execution.Id"
+        }
+      },
+      "Next": "FailWorkflow",
+      "ResultPath": null
+    },
+    "FailWorkflow": {
+      "Type": "Fail",
+      "Comment": "Slack 알림 후 워크플로우 실패 처리",
+      "Error": "WorkflowFailed",
+      "Cause": "워크플로우 실행 중 오류가 발생하여 Slack 알림을 전송하고 종료합니다."
+    }
+  }
+}
