@@ -1,0 +1,55 @@
+openapi: "3.0.1"
+info:
+  title: "EDR-Vector-Search"
+  version: "2025-11-18T13:34:31Z"
+servers:
+- url: "https://0h8bf0r857.execute-api.ap-northeast-2.amazonaws.com/{basePath}"
+  variables:
+    basePath:
+      default: "v1"
+paths:
+  /save:
+    post:
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Empty"
+      x-amazon-apigateway-integration:
+        uri: "arn:aws:apigateway:ap-northeast-2:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-2:640983358257:function:find-similar-ticket/invocations"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        timeoutInMillis: 29000
+        responseTransferMode: "BUFFERED"
+        contentHandling: "CONVERT_TO_TEXT"
+        type: "aws_proxy"
+  /search:
+    post:
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Empty"
+      x-amazon-apigateway-integration:
+        uri: "arn:aws:apigateway:ap-northeast-2:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-2:640983358257:function:find-similar-ticket/invocations"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        timeoutInMillis: 29000
+        responseTransferMode: "BUFFERED"
+        contentHandling: "CONVERT_TO_TEXT"
+        type: "aws_proxy"
+components:
+  schemas:
+    Empty:
+      title: "Empty Schema"
+      type: "object"
