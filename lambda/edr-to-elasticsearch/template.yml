@@ -1,0 +1,257 @@
+# This AWS SAM template has been generated from your function's configuration. If
+# your function has one or more triggers, note that the AWS resources associated
+# with these triggers aren't fully specified in this template and include
+# placeholder values. Open this template in AWS Infrastructure Composer or your
+# favorite IDE and modify it to specify a serverless application with other AWS
+# resources.
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: An AWS Serverless Application Model template describing your function.
+Resources:
+  edrtoelasticsearch:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src
+      Description: ''
+      MemorySize: 128
+      Timeout: 900
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      EphemeralStorage:
+        Size: 512
+      EventInvokeConfig:
+        MaximumEventAgeInSeconds: 21600
+        MaximumRetryAttempts: 2
+      Layers:
+        - !Ref Layer1
+        - !Ref Layer2
+      PackageType: Zip
+      Policies:
+        - Statement:
+            - Sid: Statement1
+              Effect: Allow
+              Action:
+                - ssm:GetParameter
+                - ssm:GetParameters
+                - ssm:GetParametersByPath
+              Resource:
+                - arn:aws:ssm:ap-northeast-2:640983358257:parameter/planit/edr
+                - arn:aws:ssm:ap-northeast-2:640983358257:parameter/planit/edr/*
+                - >-
+                  arn:aws:ssm:ap-northeast-2:640983358257:parameter/planit/notification/slack/api/webhook_url
+                - >-
+                  arn:aws:ssm:ap-northeast-2:640983358257:parameter/planit/s3/raw/bucket
+                - arn:aws:ssm:ap-northeast-2:640983358257:parameter/planit/llm/*
+                - >-
+                  arn:aws:ssm:ap-northeast-2:640983358257:parameter/planit/es-user
+                - >-
+                  arn:aws:ssm:ap-northeast-2:640983358257:parameter/planit/es-password
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+              Resource: arn:aws:logs:ap-northeast-2:640983358257:*
+            - Effect: Allow
+              Action:
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource:
+                - >-
+                  arn:aws:logs:ap-northeast-2:640983358257:log-group:/aws/lambda/edr-to-elasticsearch:*
+            - Sid: AmazonVPCFullAccess
+              Effect: Allow
+              Action:
+                - ec2:AcceptVpcPeeringConnection
+                - ec2:AcceptVpcEndpointConnections
+                - ec2:AllocateAddress
+                - ec2:AssignIpv6Addresses
+                - ec2:AssignPrivateIpAddresses
+                - ec2:AssociateAddress
+                - ec2:AssociateDhcpOptions
+                - ec2:AssociateRouteTable
+                - ec2:AssociateSecurityGroupVpc
+                - ec2:AssociateSubnetCidrBlock
+                - ec2:AssociateVpcCidrBlock
+                - ec2:AttachClassicLinkVpc
+                - ec2:AttachInternetGateway
+                - ec2:AttachNetworkInterface
+                - ec2:AttachVpnGateway
+                - ec2:AuthorizeSecurityGroupEgress
+                - ec2:AuthorizeSecurityGroupIngress
+                - ec2:CreateCarrierGateway
+                - ec2:CreateCustomerGateway
+                - ec2:CreateDefaultSubnet
+                - ec2:CreateDefaultVpc
+                - ec2:CreateDhcpOptions
+                - ec2:CreateEgressOnlyInternetGateway
+                - ec2:CreateFlowLogs
+                - ec2:CreateInternetGateway
+                - ec2:CreateLocalGatewayRouteTableVpcAssociation
+                - ec2:CreateNatGateway
+                - ec2:CreateNetworkAcl
+                - ec2:CreateNetworkAclEntry
+                - ec2:CreateNetworkInterface
+                - ec2:CreateNetworkInterfacePermission
+                - ec2:CreateRoute
+                - ec2:CreateRouteTable
+                - ec2:CreateSecurityGroup
+                - ec2:CreateSubnet
+                - ec2:CreateTags
+                - ec2:CreateVpc
+                - ec2:CreateVpcEndpoint
+                - ec2:CreateVpcEndpointConnectionNotification
+                - ec2:CreateVpcEndpointServiceConfiguration
+                - ec2:CreateVpcPeeringConnection
+                - ec2:CreateVpnConnection
+                - ec2:CreateVpnConnectionRoute
+                - ec2:CreateVpnGateway
+                - ec2:DeleteCarrierGateway
+                - ec2:DeleteCustomerGateway
+                - ec2:DeleteDhcpOptions
+                - ec2:DeleteEgressOnlyInternetGateway
+                - ec2:DeleteFlowLogs
+                - ec2:DeleteInternetGateway
+                - ec2:DeleteLocalGatewayRouteTableVpcAssociation
+                - ec2:DeleteNatGateway
+                - ec2:DeleteNetworkAcl
+                - ec2:DeleteNetworkAclEntry
+                - ec2:DeleteNetworkInterface
+                - ec2:DeleteNetworkInterfacePermission
+                - ec2:DeleteRoute
+                - ec2:DeleteRouteTable
+                - ec2:DeleteSecurityGroup
+                - ec2:DeleteSubnet
+                - ec2:DeleteTags
+                - ec2:DeleteVpc
+                - ec2:DeleteVpcEndpoints
+                - ec2:DeleteVpcEndpointConnectionNotifications
+                - ec2:DeleteVpcEndpointServiceConfigurations
+                - ec2:DeleteVpcPeeringConnection
+                - ec2:DeleteVpnConnection
+                - ec2:DeleteVpnConnectionRoute
+                - ec2:DeleteVpnGateway
+                - ec2:DescribeAccountAttributes
+                - ec2:DescribeAddresses
+                - ec2:DescribeAvailabilityZones
+                - ec2:DescribeCarrierGateways
+                - ec2:DescribeClassicLinkInstances
+                - ec2:DescribeCustomerGateways
+                - ec2:DescribeDhcpOptions
+                - ec2:DescribeEgressOnlyInternetGateways
+                - ec2:DescribeFlowLogs
+                - ec2:DescribeInstances
+                - ec2:DescribeInternetGateways
+                - ec2:DescribeIpv6Pools
+                - ec2:DescribeLocalGatewayRouteTables
+                - ec2:DescribeLocalGatewayRouteTableVpcAssociations
+                - ec2:DescribeKeyPairs
+                - ec2:DescribeMovingAddresses
+                - ec2:DescribeNatGateways
+                - ec2:DescribeNetworkAcls
+                - ec2:DescribeNetworkInterfaceAttribute
+                - ec2:DescribeNetworkInterfacePermissions
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DescribePrefixLists
+                - ec2:DescribeRouteTables
+                - ec2:DescribeSecurityGroupReferences
+                - ec2:DescribeSecurityGroupRules
+                - ec2:DescribeSecurityGroups
+                - ec2:DescribeSecurityGroupVpcAssociations
+                - ec2:DescribeStaleSecurityGroups
+                - ec2:DescribeSubnets
+                - ec2:DescribeTags
+                - ec2:DescribeVpcAttribute
+                - ec2:DescribeVpcClassicLink
+                - ec2:DescribeVpcClassicLinkDnsSupport
+                - ec2:DescribeVpcEndpointConnectionNotifications
+                - ec2:DescribeVpcEndpointConnections
+                - ec2:DescribeVpcEndpoints
+                - ec2:DescribeVpcEndpointServiceConfigurations
+                - ec2:DescribeVpcEndpointServicePermissions
+                - ec2:DescribeVpcEndpointServices
+                - ec2:DescribeVpcPeeringConnections
+                - ec2:DescribeVpcs
+                - ec2:DescribeVpnConnections
+                - ec2:DescribeVpnGateways
+                - ec2:DetachClassicLinkVpc
+                - ec2:DetachInternetGateway
+                - ec2:DetachNetworkInterface
+                - ec2:DetachVpnGateway
+                - ec2:DisableVgwRoutePropagation
+                - ec2:DisableVpcClassicLink
+                - ec2:DisableVpcClassicLinkDnsSupport
+                - ec2:DisassociateAddress
+                - ec2:DisassociateRouteTable
+                - ec2:DisassociateSecurityGroupVpc
+                - ec2:DisassociateSubnetCidrBlock
+                - ec2:DisassociateVpcCidrBlock
+                - ec2:EnableVgwRoutePropagation
+                - ec2:EnableVpcClassicLink
+                - ec2:EnableVpcClassicLinkDnsSupport
+                - ec2:GetSecurityGroupsForVpc
+                - ec2:ModifyNetworkInterfaceAttribute
+                - ec2:ModifySecurityGroupRules
+                - ec2:ModifySubnetAttribute
+                - ec2:ModifyVpcAttribute
+                - ec2:ModifyVpcEndpoint
+                - ec2:ModifyVpcEndpointConnectionNotification
+                - ec2:ModifyVpcEndpointServiceConfiguration
+                - ec2:ModifyVpcEndpointServicePermissions
+                - ec2:ModifyVpcPeeringConnectionOptions
+                - ec2:ModifyVpcTenancy
+                - ec2:MoveAddressToVpc
+                - ec2:RejectVpcEndpointConnections
+                - ec2:RejectVpcPeeringConnection
+                - ec2:ReleaseAddress
+                - ec2:ReplaceNetworkAclAssociation
+                - ec2:ReplaceNetworkAclEntry
+                - ec2:ReplaceRoute
+                - ec2:ReplaceRouteTableAssociation
+                - ec2:ResetNetworkInterfaceAttribute
+                - ec2:RestoreAddressToClassic
+                - ec2:RevokeSecurityGroupEgress
+                - ec2:RevokeSecurityGroupIngress
+                - ec2:UnassignIpv6Addresses
+                - ec2:UnassignPrivateIpAddresses
+                - ec2:UpdateSecurityGroupRuleDescriptionsEgress
+                - ec2:UpdateSecurityGroupRuleDescriptionsIngress
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - s3:*
+                - s3-object-lambda:*
+              Resource: '*'
+      RecursiveLoop: Terminate
+      SnapStart:
+        ApplyOn: None
+      VpcConfig:
+        SecurityGroupIds:
+          - sg-0106e7725dc42f404
+        SubnetIds:
+          - subnet-0c03879c709181a8a
+        Ipv6AllowedForDualStack: false
+      RuntimeManagementConfig:
+        UpdateRuntimeOn: Auto
+  # This resource represents your Layer with name requests-library-312. To
+# download the content of your Layer, go to
+# 
+# aws.amazon.com/go/view?arn=arn%3Aaws%3Alambda%3Aap-northeast-2%3A640983358257%3Alayer%3Arequests-library-312%3A2&source=lambda
+  Layer1:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: ./requests-library-312
+      LayerName: requests-library-312
+      CompatibleRuntimes:
+        - python3.12
+  # This resource represents your Layer with name openai-and-es-layer. To
+# download the content of your Layer, go to
+# 
+# aws.amazon.com/go/view?arn=arn%3Aaws%3Alambda%3Aap-northeast-2%3A640983358257%3Alayer%3Aopenai-and-es-layer%3A1&source=lambda
+  Layer2:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: ./openai-and-es-layer
+      LayerName: openai-and-es-layer
+      CompatibleRuntimes:
+        - python3.12

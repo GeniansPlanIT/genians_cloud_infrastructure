@@ -1,0 +1,117 @@
+# This AWS SAM template has been generated from your function's configuration. If
+# your function has one or more triggers, note that the AWS resources associated
+# with these triggers aren't fully specified in this template and include
+# placeholder values. Open this template in AWS Infrastructure Composer or your
+# favorite IDE and modify it to specify a serverless application with other AWS
+# resources.
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: An AWS Serverless Application Model template describing your function.
+Resources:
+  edrticketreferencebuilder:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src
+      Description: ''
+      MemorySize: 1024
+      Timeout: 900
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      EphemeralStorage:
+        Size: 512
+      EventInvokeConfig:
+        MaximumEventAgeInSeconds: 21600
+        MaximumRetryAttempts: 2
+      Layers:
+        - !Ref Layer1
+        - !Ref Layer2
+      PackageType: Zip
+      Policies:
+        - Statement:
+            - Sid: AllowSSMGetParameter
+              Effect: Allow
+              Action:
+                - ssm:GetParameter
+                - ssm:GetParameters
+                - ssm:GetParametersByPath
+              Resource:
+                - >-
+                  arn:aws:ssm:ap-northeast-2:640983358257:parameter/planit/os-host
+                - >-
+                  arn:aws:ssm:ap-northeast-2:640983358257:parameter/planit/os-user
+                - >-
+                  arn:aws:ssm:ap-northeast-2:640983358257:parameter/planit/os-pass
+                - arn:aws:ssm:ap-northeast-2:640983358257:parameter/planit/llm/*
+                - >-
+                  arn:aws:ssm:ap-northeast-2:640983358257:parameter/planit/es-user/super
+                - >-
+                  arn:aws:ssm:ap-northeast-2:640983358257:parameter/planit/es-password/super
+            - Sid: AllowBedrockInvoke
+              Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: >-
+                arn:aws:bedrock:ap-northeast-2::foundation-model/amazon.titan-embed-text-v2:0
+            - Sid: AllowReadRawDataJson
+              Effect: Allow
+              Action:
+                - s3:GetObject
+              Resource:
+                - arn:aws:s3:::planit-ai-model/raw_data.json
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: >-
+                arn:aws:secretsmanager:ap-northeast-2:640983358257:secret:openai-api-key-xmZUrT
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+              Resource: arn:aws:logs:ap-northeast-2:640983358257:*
+            - Effect: Allow
+              Action:
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource:
+                - >-
+                  arn:aws:logs:ap-northeast-2:640983358257:log-group:/aws/lambda/edr-ticket-reference-builder:*
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DeleteNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+              Resource: '*'
+      RecursiveLoop: Terminate
+      SnapStart:
+        ApplyOn: None
+      VpcConfig:
+        SecurityGroupIds:
+          - sg-0106e7725dc42f404
+        SubnetIds:
+          - subnet-0c03879c709181a8a
+        Ipv6AllowedForDualStack: false
+      RuntimeManagementConfig:
+        UpdateRuntimeOn: Auto
+  # This resource represents your Layer with name openai-and-es-layer. To
+# download the content of your Layer, go to
+# 
+# aws.amazon.com/go/view?arn=arn%3Aaws%3Alambda%3Aap-northeast-2%3A640983358257%3Alayer%3Aopenai-and-es-layer%3A1&source=lambda
+  Layer1:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: ./openai-and-es-layer
+      LayerName: openai-and-es-layer
+      CompatibleRuntimes:
+        - python3.12
+  # This resource represents your Layer with name opensearch-layer. To download
+# the content of your Layer, go to
+# 
+# aws.amazon.com/go/view?arn=arn%3Aaws%3Alambda%3Aap-northeast-2%3A640983358257%3Alayer%3Aopensearch-layer%3A1&source=lambda
+  Layer2:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: ./opensearch-layer
+      LayerName: opensearch-layer
+      CompatibleRuntimes:
+        - python3.12
