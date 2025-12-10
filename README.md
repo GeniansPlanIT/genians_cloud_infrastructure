@@ -6,7 +6,7 @@
 기존 EDR 시스템의 높은 오탐(False Positive)과 단순 반복 업무를 해결하기 위해 **맥락 기반 분석**과 **RAG(Retrieval-Augmented Generation)** 기술을 도입하였습니다.
 
 ## 🗃️ 시스템 워크플로우 
-<img width="811" height="1109" alt="stepfunctions_graph" src="https://github.com/user-attachments/assets/9e612c86-3e77-40bd-9b00-b6b1d15869d4" />
+<img width="500" alt="stepfunctions_graph" src="https://github.com/user-attachments/assets/9e612c86-3e77-40bd-9b00-b6b1d15869d4" />
 
 
 본 프로젝트는 **AWS Serverless Architecture**를 기반으로 설계되었으며, **AWS Step Functions**를 통해 전체 데이터 파이프라인의 상태를 관리합니다.
