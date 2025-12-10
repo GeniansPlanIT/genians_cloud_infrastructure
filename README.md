@@ -1,49 +1,52 @@
-# AI 기반 보안 운영 파이프라인(AI-Driven Security Operations Pipeline)
+# AI 기반 보안 운영 파이프라인 (AI-Driven Security Operations Pipeline)
 
-## 📄프로젝트 개요
-**PLANIT AI Pipeline**은 EDR(Endpoint Detection and Response) 데이터를 수집하여 **AI(LLM) 기반으로 위협을 자동 분석하고, 연관된 보안 이벤트를 하나의 티켓으로 그룹핑**하는 자동화된 보안 관제 시스템입니다.
+## 📄 프로젝트 개요
+> **PLANIT AI Pipeline**은 EDR(Endpoint Detection and Response) 데이터를 수집하여 **AI(LLM) 기반으로 위협을 자동 분석하고, 연관된 보안 이벤트를 하나의 티켓으로 그룹핑**하는 자동화된 보안 관제 시스템입니다.
 
 기존 EDR 시스템의 높은 오탐(False Positive)과 단순 반복 업무를 해결하기 위해 **맥락 기반 분석**과 **RAG(Retrieval-Augmented Generation)** 기술을 도입하였습니다.
 
 ## 🗃️ 아키텍처 (Architecture)
-[사진 추가 예정]
+*(사진 추가 예정)*
+
 본 프로젝트는 **AWS Serverless Architecture**를 기반으로 설계되었으며, **AWS Step Functions**를 통해 전체 데이터 파이프라인의 상태를 관리합니다.
 
 ## 🎯 핵심 기능
-1. 맥락 기반 위협 분석
-단일 위협 이벤트만 보고 판단하지 않고, 해당 이벤트 발생 **전후 60초 간의 주변 Syslog**를 함께 수집하여 AI에게 전달합니다.
-- Logic: planit-edr-analysis-consumer
-- Process: 메인 이벤트 발생 시, 동일 호스트의 프로세스, 네트워크, 파일, 레지스트리 행위 로그를 조회하여 LLM이 "정상 관리자 행위"인지 "악성 공격"인지 판단하도록 유도합니다.
 
-2. RAG 기반 자동 티켓 그룹핑
+### 1. 맥락 기반 위협 분석
+단일 위협 이벤트만 보고 판단하지 않고, 해당 이벤트 발생 **전후 60초 간의 주변 Syslog**를 함께 수집하여 AI에게 전달합니다.
+- **Logic**: `planit-edr-analysis-consumer`
+- **Process**: 메인 이벤트 발생 시, 동일 호스트의 프로세스, 네트워크, 파일, 레지스트리 행위 로그를 조회하여 LLM이 "정상 관리자 행위"인지 "악성 공격"인지 판단하도록 유도합니다.
+
+### 2. RAG 기반 자동 티켓 그룹핑
 단발성 경보를 쏟아내는 것이 아니라, 연관된 공격 흐름을 묶어 하나의 **"Incident Ticket"**으로 생성합니다.
-- Logic: ticket-generator
-- Process:
+- **Logic**: `ticket-generator`
+- **Process**:
   1. 각 이벤트의 행위를 요약하고 임베딩(Embedding) 생성 (AWS Bedrock Titan)
   2. Vector DB(OpenSearch)에서 과거 유사 사례(Reference Story) 검색
   3. LLM이 유사도와 공격 시나리오를 기반으로 이벤트를 클러스터링하여 티켓 생성
 
-3. 유사 티켓 검색
-- Logic: find-similar-ticket
-- 관제 요원이 현재 분석 중인 티켓과 **가장 유사했던 과거의 공격 사례**를 즉시 조회할 수 있는 기능을 제공합니다. 이를 통해 대응 속도를 높입니다.
+### 3. 유사 티켓 검색
+관제 요원이 현재 분석 중인 티켓과 **가장 유사했던 과거의 공격 사례**를 즉시 조회할 수 있는 기능을 제공하여 대응 속도를 높입니다.
+- **Logic**: `find-similar-ticket`
 
-4. Serverless Event Pipeline
-- AWS Step Functions를 사용하여 대량의 데이터 처리 흐름을 시각화하고 에러 핸들링(Retry/Catch)을 자동화했습니다.
-- Map State를 활용하여 수백 개의 이벤트를 병렬로 동시에 AI 분석 처리합니다.
+### 4. Serverless Event Pipeline
+- **AWS Step Functions**를 사용하여 대량의 데이터 처리 흐름을 시각화하고 에러 핸들링(Retry/Catch)을 자동화했습니다.
+- **Map State**를 활용하여 수백 개의 이벤트를 병렬로 동시에 AI 분석 처리합니다.
 
-## 🛠️기술 스택
-| Category      | Service / Tool                | Description                                             |
-|---------------|-------------------------------|---------------------------------------------------------|
-| Compute       | AWS Lambda                    | Python 기반의 데이터 수집, AI 분석, 티켓 생성 로직 수행 |
-| Orchestration | AWS Step Functions             | 순차적/병렬적 워크플로우 관리 및 에러 핸들링            |
-| Database      | Amazon OpenSearch & ES        | 로그 저장, 벡터 검색(KNN), 키워드 검색                  |
-| Storage       | Amazon S3                     | Raw 데이터 영구 보관                                    |
-| AI / ML       | OpenAI API                    | 위협 분석(Classification) 및 상황 요약(Summarization)   |
-| Embedding     | AWS Bedrock                   | 텍스트 임베딩(Titan Embedding v2) 생성                  |
+## 🛠️ 기술 스택
 
+| Category | Service / Tool | Description |
+| :--- | :--- | :--- |
+| **Compute** | AWS Lambda | Python 기반의 데이터 수집, AI 분석, 티켓 생성 로직 수행 |
+| **Orchestration** | AWS Step Functions | 순차적/병렬적 워크플로우 관리 및 에러 핸들링 |
+| **Database** | Amazon OpenSearch & ES | 로그 저장, 벡터 검색(KNN), 키워드 검색 |
+| **Storage** | Amazon S3 | Raw 데이터 영구 보관 |
+| **AI / ML** | OpenAI API | 위협 분석(Classification) 및 상황 요약(Summarization) |
+| **Embedding** | AWS Bedrock | 텍스트 임베딩(Titan Embedding v2) 생성 |
 
-## 📂디렉토리 구조
-'''
+## 📂 디렉토리 구조
+
+```bash
 .
 ├── api_gateway/            # API Gateway 설정
 ├── step_functions/         # 데이터 파이프라인 워크플로우 정의
@@ -55,7 +58,7 @@
 │   │   ├── ticket-generator/       # RAG 기반 티켓 그룹핑
 │   │   ├── find-similar-ticket/    # 유사 티켓 검색 API (벡터 검색)
 │   │   └── slack-notifier/         # 에러 발생 시 Slack 알림 전송
-│   │   
+│   │
 │   └── tools_and_legacy/   # [도구 및 레거시]
 │       ├── collect_edr_data_for_ai/# AI 학습 데이터 수집용 도구
 │       ├── edr-ticket-reference-*/ # RAG용 레퍼런스 데이터 빌더
@@ -64,7 +67,7 @@
 │       └── start-llm-malicious-*/  # (Deprecated) SQS 분석 위협 이벤트 분배
 │
 └── sagemaker/              # [AI 모델 연구 기록]
-'''
+```
 
 ## 💡프로젝트 상세 로직
 데이터 파이프라인 흐름(AWS EventBridge Trigger)
